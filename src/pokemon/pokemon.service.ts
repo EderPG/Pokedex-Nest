@@ -39,26 +39,28 @@ export class PokemonService {
     if (!isNaN(+term)) {
       pokemon = await this.pokemonModel.findOne({ no: term });
     }
-
     //si no encuentra el mongo-id
     if (!pokemon && isValidObjectId(term)) {
       pokemon = await this.pokemonModel.findById(term);
     }
-
+    // por nombre
+    if (!pokemon) {
+      pokemon = await this.pokemonModel.findOne({
+        name: term.toLowerCase().trim(),
+      });
+    }
     ///si no se encuentra el pokemon
     if (!pokemon)
       throw new NotFoundException(
         `Pokemon with id, name or no ${term} not found`,
       );
-
     return pokemon;
   }
 
   async update(term: string, updatePokemonDto: UpdatePokemonDto) {
     const pokemon = await this.findOne(term);
     if (updatePokemonDto.name)
-      updatePokemonDto.name = updatePokemonDto.name.toLocaleLowerCase();
-
+      updatePokemonDto.name = updatePokemonDto.name.toLowerCase();
     try {
       await pokemon.updateOne(updatePokemonDto);
       return { ...pokemon.toJSON(), ...updatePokemonDto };
@@ -72,11 +74,10 @@ export class PokemonService {
     // await pokemon.deleteOne();
     // return {id};
     // const result = this.pokemonModel.findByIdAndDelete(id);
-    const {deletedCount } = await this.pokemonModel.deleteOne({_id: id});
+    const { deletedCount } = await this.pokemonModel.deleteOne({ _id: id });
     if (deletedCount === 0) {
-      throw new BadRequestException(`Pokemon with id ${id} not found`)
+      throw new BadRequestException(`Pokemon with id ${id} not found`);
     }
-
     return;
   }
 
